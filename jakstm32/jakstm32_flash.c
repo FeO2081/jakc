@@ -6,6 +6,7 @@
  */
 #include "jakstm32.h"
 //
+#if JAKFLASH
 static FLASH_EraseInitTypeDef EraseInitStruct;
 void thread_flash(uint32_t *para, int len)
 {
@@ -18,7 +19,7 @@ void thread_flash(uint32_t *para, int len)
 	EraseInitStruct.PageAddress = ADDR_FLASH_PAGE_63;
 	EraseInitStruct.NbPages = 1;
 	uint32_t dum;
-	if (HAL_FLASHEx_Erase(&EraseInitStruct, &dum) != HAL_OK) ;
+	if (HAL_FLASHEx_Erase(&EraseInitStruct, &dum) != HAL_OK);
 	uint32_t Address = ADDR_FLASH_PAGE_63;
 	uint32_t idx = 0;
 	while (Address < ADDR_FLASH_PAGE_63 + len / 4)
@@ -36,3 +37,4 @@ __weak void call_wakeFLASH()
 __weak void call_waitFLASH()
 {
 }
+#endif

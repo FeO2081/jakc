@@ -77,6 +77,7 @@ enum jakmode
 #define		n0(X)	((jkreal)(X)*n0one)
 
 #define		u0one	(1024*1024)
+#define		u0haf	(1024*512)
 #define		u0max	(u0one-1)
 #define		u0(X)	((jkreal)(X)*u0one)
 
