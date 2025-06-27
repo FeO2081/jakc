@@ -1,0 +1,80 @@
+/*
+ * jakctrl_faut.c
+ *
+ *  Created on: Jan 19, 2025
+ *      Author: JAK
+ */
+
+#include "jakctrl.h"
+//
+FASTFUNC uint D0faut_set(enum jakfaut e0fautorg, enum jakfaut e0fautnew)
+{
+	return e0fautorg | e0fautnew;
+}
+FASTFUNC uint D0faut_clr(enum jakfaut e0fautorg, enum jakfaut e0fautnew)
+{
+	return e0fautorg & (~e0fautnew);
+}
+FASTFUNC enum jakfaut jakctrl_e0_faut(enum jakfaut e0fautorg, const sint d0val, const sint d0mx, const sint d0mi, const enum jakfaut e0faut, const enum jakfaut_type e0type)
+{
+	if (jakfaut_manual == e0type) return D0faut_set(e0fautorg, e0faut);
+	//
+	if (d0val > d0mx) return D0faut_set(e0fautorg, e0faut);
+	if (d0val < d0mi) return D0faut_set(e0fautorg, e0faut);
+	return D0faut_clr(e0fautorg, e0faut);
+}
+FASTFUNC enum jakfaut jakctrl_fautSET(enum jakfaut e0fautorg, enum jakfaut e0fautnew)
+{
+	return e0fautorg | e0fautnew;
+}
+FASTFUNC enum jakfaut jakctrl_fautCLR(enum jakfaut e0fautorg, enum jakfaut e0fautnew)
+{
+	return e0fautorg & (~e0fautnew);
+}
+/*FASTFUNC uint faut1(struct jakctrl_pmsm *ptr, const sint m0iac, const sint m0udc, const sint d0temp)
+ {
+ if (ptr->s0flag.d0octest != 0)
+ {
+ ptr->s0flag.d0octest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_oc);
+ jakfoc_restart(ptr);
+ return;
+ }
+ if (ptr->s0flag.d0ovtest != 0)
+ {
+ ptr->s0flag.d0ovtest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_ov);
+ jakfoc_restart(ptr);
+ return;
+ }
+ if (ptr->s0flag.d0ottest)
+ {
+ ptr->s0flag.d0ottest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_ot);
+ jakfoc_restart(ptr);
+ return;
+ }
+ if (m0iac > +ptr->s0para.m0iacdrvmx_abs * 2)
+ {
+ ptr->s0flag.d0octest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_oc);
+ jakfoc_restart(ptr);
+ return;
+ }
+ if (m0iac < -ptr->s0para.m0iacgenmx_abs * 2)
+ {
+ ptr->s0flag.d0octest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_oc);
+ jakfoc_restart(ptr);
+ return;
+ }
+ if (m0udc > ptr->s0para.m0udcmx)
+ {
+ ptr->s0flag.d0ovtest = 0;
+ ptr->s0flag.e0faut = d0faut_set(ptr->s0flag.e0faut, jakfaut_ov);
+ jakfoc_restart(ptr);
+ return;
+ }
+ ptr->s0flag.e0faut = d0faut_clr(ptr->s0flag.e0faut, jakfaut_ff);
+ }*/
+

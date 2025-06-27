@@ -1,0 +1,126 @@
+/*
+ * jakctrl_pwm.c
+ *
+ *  Created on: Jan 16, 2025
+ *      Author: JAK
+ */
+
+#include "jakctrl.h"
+//
+/*static const word cw257pwm1[257] =
+ {
+ 0x0000, 0x01FD, 0x03FA, 0x05F5, 0x07EE, 0x09E4, 0x0BD7, 0x0DC5, 0x0FAF, 0x1194, 0x1373, 0x154B, 0x171C, 0x18E5, 0x1AA7,
+ 0x1C5F, 0x1E0F, 0x1FB5, 0x2152, 0x22E4, 0x246B, 0x25E8, 0x2759, 0x28BF, 0x2A1A, 0x2B69, 0x2CAC, 0x2DE4, 0x2F0F, 0x302F,
+ 0x3143, 0x324B, 0x3347, 0x3437, 0x351C, 0x35F6, 0x36C5, 0x3789, 0x3842, 0x38F0, 0x3994, 0x3A2F, 0x3AC0, 0x3B47, 0x3BC6,
+ 0x3C3C, 0x3CA9, 0x3D0F, 0x3D6C, 0x3DC2, 0x3E11, 0x3E59, 0x3E9B, 0x3ED6, 0x3F0B, 0x3F3B, 0x3F64, 0x3F89, 0x3FA8, 0x3FC2,
+ 0x3FD7, 0x3FE7, 0x3FF3, 0x3FFA, 0x3FFC, 0x3FFA, 0x3FF3, 0x3FE7, 0x3FD7, 0x3FC2, 0x3FA8, 0x3F89, 0x3F64, 0x3F3B, 0x3F0B,
+ 0x3ED6, 0x3E9B, 0x3E59, 0x3E11, 0x3DC2, 0x3D6C, 0x3D0F, 0x3CA9, 0x3C3C, 0x3BC6, 0x3B47, 0x3AC0, 0x3A2F, 0x3994, 0x38F0,
+ 0x3842, 0x3789, 0x36C5, 0x35F6, 0x351C, 0x3437, 0x3347, 0x324B, 0x3143, 0x302F, 0x2F0F, 0x2DE4, 0x2CAC, 0x2B69, 0x2A1A,
+ 0x28BF, 0x2759, 0x25E8, 0x246B, 0x22E4, 0x2152, 0x1FB5, 0x1E0F, 0x1C5F, 0x1AA7, 0x18E5, 0x171C, 0x154B, 0x1373, 0x1194,
+ 0x0FAF, 0x0DC5, 0x0BD7, 0x09E4, 0x07EE, 0x05F5, 0x03FA, 0x01FD, 0x0000, 0xFE03, 0xFC06, 0xFA0B, 0xF812, 0xF61C, 0xF429,
+ 0xF23B, 0xF051, 0xEE6C, 0xEC8D, 0xEAB5, 0xE8E4, 0xE71B, 0xE559, 0xE3A1, 0xE1F1, 0xE04B, 0xDEAE, 0xDD1C, 0xDB95, 0xDA18,
+ 0xD8A7, 0xD741, 0xD5E6, 0xD497, 0xD354, 0xD21C, 0xD0F1, 0xCFD1, 0xCEBD, 0xCDB5, 0xCCB9, 0xCBC9, 0xCAE4, 0xCA0A, 0xC93B,
+ 0xC877, 0xC7BE, 0xC710, 0xC66C, 0xC5D1, 0xC540, 0xC4B9, 0xC43A, 0xC3C4, 0xC357, 0xC2F1, 0xC294, 0xC23E, 0xC1EF, 0xC1A7,
+ 0xC165, 0xC12A, 0xC0F5, 0xC0C5, 0xC09C, 0xC077, 0xC058, 0xC03E, 0xC029, 0xC019, 0xC00D, 0xC006, 0xC004, 0xC006, 0xC00D,
+ 0xC019, 0xC029, 0xC03E, 0xC058, 0xC077, 0xC09C, 0xC0C5, 0xC0F5, 0xC12A, 0xC165, 0xC1A7, 0xC1EF, 0xC23E, 0xC294, 0xC2F1,
+ 0xC357, 0xC3C4, 0xC43A, 0xC4B9, 0xC540, 0xC5D1, 0xC66C, 0xC710, 0xC7BE, 0xC877, 0xC93B, 0xCA0A, 0xCAE4, 0xCBC9, 0xCCB9,
+ 0xCDB5, 0xCEBD, 0xCFD1, 0xD0F1, 0xD21C, 0xD354, 0xD497, 0xD5E6, 0xD741, 0xD8A7, 0xDA18, 0xDB95, 0xDD1C, 0xDEAE, 0xE04B,
+ 0xE1F1, 0xE3A1, 0xE559, 0xE71B, 0xE8E4, 0xEAB5, 0xEC8D, 0xEE6C, 0xF051, 0xF23B, 0xF429, 0xF61C, 0xF812, 0xFA0B, 0xFC06,
+ 0xFE03, 0x0000, //
+ };*/
+static const word cw257pwm[257] =
+{
+	0, 603, 1204, 1803, 2398, 2988, 3571, 4146, 4712, 5268, 5813, 6346, 6865, 7370, 7860, 8334, 8791, 9230, 9652, 10054, 10438,
+	10803, 11148, 11473, 11778, 12063, 12328, 12573, 12799, 13005, 13193, 13362, 13513, 13646, 13763, 13864, 13949, 14019,
+	14076, 14120, 14152, 14173, 14184, 14185, 14178, 14164, 14144, 14118, 14088, 14055, 14019, 13981, 13943, 13904, 13866,
+	13830, 13795, 13764, 13735, 13710, 13689, 13672, 13660, 13652, 13650, 13652, 13660, 13672, 13689, 13710, 13735, 13764,
+	13795, 13830, 13866, 13904, 13943, 13981, 14019, 14055, 14088, 14118, 14144, 14164, 14178, 14185, 14184, 14173, 14152,
+	14120, 14076, 14019, 13949, 13864, 13763, 13646, 13513, 13362, 13193, 13005, 12799, 12573, 12328, 12063, 11778, 11473,
+	11148, 10803, 10438, 10054, 9652, 9230, 8791, 8334, 7860, 7370, 6865, 6346, 5813, 5268, 4712, 4146, 3571, 2988, 2398, 1803,
+	1204, 603, 0, -603, -1204, -1803, -2398, -2988, -3571, -4146, -4712, -5268, -5813, -6346, -6865, -7370, -7860, -8334, -8791,
+	-9230, -9652, -10054, -10438, -10803, -11148, -11473, -11778, -12063, -12328, -12573, -12799, -13005, -13193, -13362,
+	-13513, -13646, -13763, -13864, -13949, -14019, -14076, -14120, -14152, -14173, -14184, -14185, -14178, -14164, -14144,
+	-14118, -14088, -14055, -14019, -13981, -13943, -13904, -13866, -13830, -13795, -13764, -13735, -13710, -13689, -13672,
+	-13660, -13652, -13650, -13652, -13660, -13672, -13689, -13710, -13735, -13764, -13795, -13830, -13866, -13904, -13943,
+	-13981, -14019, -14055, -14088, -14118, -14144, -14164, -14178, -14185, -14184, -14173, -14152, -14120, -14076, -14019,
+	-13949, -13864, -13763, -13646, -13513, -13362, -13193, -13005, -12799, -12573, -12328, -12063, -11778, -11473, -11148,
+	-10803, -10438, -10054, -9652, -9230, -8791, -8334, -7860, -7370, -6865, -6346, -5813, -5268, -4712, -4146, -3571, -2988,
+	-2398, -1803, -1204, -603, 0, //
+};
+FASTFUNC void jakctrl_pwm2(struct jakpwm *pwm, sint d0arr)
+{
+	pwm->tmp1 = a0_lookword(cw257pwm, (pwm->u0cita), 257);
+	pwm->tmp2 = a0_lookword(cw257pwm, (pwm->u0cita + (u0one / 4)) & u0max, 257);
+	pwm->w0cmprc = d0arr >> 1;
+	pwm->w0cmpra = pwm->w0cmprc + g0_mpy(pwm->tmp1, pwm->w0cmprc);
+	pwm->w0cmprb = pwm->w0cmprc + g0_mpy(pwm->tmp2, pwm->w0cmprc);
+}
+FASTFUNC void jakctrl_pwm3(struct jakpwm4 *pwm, sint d0arr, sint u0norm, sint u0omeg) //(struct jakpwm *pwm, sint d0arr)
+{
+//	pwm->tmp1 = a0_lookword(cw257pwm, (pwm->u0cita), 257);
+//	pwm->tmp2 = a0_lookword(cw257pwm, (pwm->u0cita + (u0one / 3)) & u0max, 257);
+//	pwm->tmp3 = a0_lookword(cw257pwm, (pwm->u0cita - (u0one / 3)) & u0max, 257);
+//	pwm->w0zero = d0arr >> 1;
+//	pwm->w0cmpra = pwm->w0zero + (g0_mpy(pwm->tmp1, pwm->u0norm) * pwm->w0zero >> 20);
+//	pwm->w0cmprb = pwm->w0zero + (g0_mpy(pwm->tmp2, pwm->u0norm) * pwm->w0zero >> 20);
+//	pwm->w0cmprc = pwm->w0zero + (g0_mpy(pwm->tmp3, pwm->u0norm) * pwm->w0zero >> 20);
+}
+FASTFUNC void jakctrl_pwm4(struct jakpwm4 *pwm, sint d0arr, sint u0norm, sint u0omeg)
+{
+	pwm->u0cita1 += u0omeg;
+	pwm->u0cita1 &= u0max;
+	pwm->u0cita2 = (pwm->u0cita1 + (u0one >> 2)) & u0max;
+	pwm->tmp2 = d0arr >> 1;
+	//
+	if (pwm->u0cita1 > u0one >> 1)
+	{
+		pwm->w4cmpr[0] = pwm->tmp2 + u0_mpy(u0norm, pwm->tmp2);
+	}
+	else
+	{
+		pwm->w4cmpr[0] = pwm->tmp2 - u0_mpy(u0norm, pwm->tmp2);
+	}
+	//
+	if (pwm->u0cita2 > u0one >> 1)
+	{
+		pwm->w4cmpr[1] = pwm->tmp2 + u0_mpy(u0norm, pwm->tmp2);
+	}
+	else
+	{
+		pwm->w4cmpr[1] = pwm->tmp2 - u0_mpy(u0norm, pwm->tmp2);
+	}
+	//
+	pwm->w4cmpr[2] = d0arr - pwm->w4cmpr[0];
+	pwm->w4cmpr[3] = d0arr - pwm->w4cmpr[1];
+}
+#define	_45deg	(u0one>>3)
+#define	_120deg	(u0one/3)
+VOID jakctrl_pwm(struct jakctrl_pwm8 *pwm, sint d0arr, sint u0norm, sint u0omeg, sint u0deg)
+{
+	pwm->d8cmpr[4] = d0arr >> 1;
+	//
+	pwm->u0cita += u0omeg;
+	pwm->u0cita &= u0max;
+	//
+//	for (int i = 0; i < 4; i++)
+//	{
+//		pwm->u0cita_tmp = (pwm->u0cita + i * u0deg) & u0max;
+//		pwm->tmp1 = a0_lookword(cw257pwm, pwm->u0cita_tmp, 257);
+//		pwm->d8cmpr[i] = pwm->d8cmpr[4] + (g0_mpy(pwm->tmp1, u0norm) * pwm->d8cmpr[4] >> 20);
+//	}
+	pwm->u0cita_tmp = (pwm->u0cita + 0 * u0deg) & u0max;
+	pwm->tmp1 = a0_lookword(cw257pwm, pwm->u0cita_tmp, 257);
+	pwm->d8cmpr[0] = pwm->d8cmpr[4] + (g0_mpy(pwm->tmp1, u0norm) * pwm->d8cmpr[4] >> 20);
+
+	pwm->u0cita_tmp = (pwm->u0cita + 1 * u0deg) & u0max;
+	pwm->tmp1 = a0_lookword(cw257pwm, pwm->u0cita_tmp, 257);
+	pwm->d8cmpr[1] = pwm->d8cmpr[4] + (g0_mpy(pwm->tmp1, u0norm) * pwm->d8cmpr[4] >> 20);
+
+	pwm->u0cita_tmp = (pwm->u0cita + 2 * u0deg) & u0max;
+	pwm->tmp1 = a0_lookword(cw257pwm, pwm->u0cita_tmp, 257);
+	pwm->d8cmpr[2] = pwm->d8cmpr[4] + (g0_mpy(pwm->tmp1, u0norm) * pwm->d8cmpr[4] >> 20);
+
+	pwm->u0cita_tmp = (pwm->u0cita + 3 * u0deg) & u0max;
+	pwm->tmp1 = a0_lookword(cw257pwm, pwm->u0cita_tmp, 257);
+	pwm->d8cmpr[3] = pwm->d8cmpr[4] + (g0_mpy(pwm->tmp1, u0norm) * pwm->d8cmpr[4] >> 20);
+}

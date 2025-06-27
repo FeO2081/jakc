@@ -1,0 +1,47 @@
+/*
+ * jakctrl_pwm.h
+ *
+ *  Created on: Jan 16, 2025
+ *      Author: JAK
+ */
+
+#ifndef THIRD_PARTY_JAKCTRL_JAKCTRL_PWM_H_
+#define THIRD_PARTY_JAKCTRL_JAKCTRL_PWM_H_
+//
+struct jakpwm
+{
+	word w0cmpra;
+	word w0cmprb;
+	word w0cmprc;
+	word w0zero;
+	//
+	sint u0norm;
+	sint u0cita;
+	sint u0omeg;
+	//
+	sint tmp1;
+	sint tmp2;
+	sint tmp3;
+};
+struct jakpwm4
+{
+	word w4cmpr[4];
+	sint u0cita1;
+	sint u0cita2;
+	sint u0cita3;
+	sint tmp1;
+	sint tmp2;
+};
+struct jakctrl_pwm8
+{
+	sint d8cmpr[8];
+	sint u0cita;
+	sint u0cita_tmp;
+	sint tmp1;
+	sint tmp2;
+};
+void jakctrl_pwm2(struct jakpwm *pwm, sint d0arr);
+void jakctrl_pwm3(struct jakpwm4 *pwm, sint d0arr, sint u0norm, sint u0omeg);
+void jakctrl_pwm(struct jakctrl_pwm8 *pwm, sint d0arr, sint u0norm, sint u0omeg, sint u0deg);
+//
+#endif /* THIRD_PARTY_JAKCTRL_JAKCTRL_PWM_H_ */

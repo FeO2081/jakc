@@ -1,0 +1,205 @@
+/*
+ * jakctrl_bldc.c
+ *
+ *  Created on: May 21, 2025
+ *      Author: JAK
+ */
+#include "jakmath/jakmath.h"
+#include "jakctrl_bldc.h"
+#include "jakctrl_bldc_calc.h"
+//
+static float f0hzpk_fr_f0uzuse(float kve, float uzuse)
+{
+	return kve * uzuse / 60.0f;
+}
+static float f0acpk_fr_f0acpr2hzpk(float acpr2hzpk, float hzpk)
+{
+	return hzpk / acpr2hzpk;
+}
+static float f0_fr_u0(const float f0pk, sint u0val)
+{
+	return (float) u0val * 1.0e-6f * f0pk;
+}
+static sint u0_fr_f0(const float f0pk, float f0val)
+{
+	return (sint) (f0val / f0pk * 1.0e+6f);
+}
+static void stop(struct jakctrl_bldc *bldc)
+{
+	if (bldc->d0star > 1000) bldc->d0star = -4000;
+}
+static void estop(struct jakctrl_bldc *bldc)
+{
+	bldc->d0star = 0;
+	PWMONOFF(off);
+}
+//
+static const word cw257pwm[257] =
+{
+	0, 603, 1206, 1808, 2408, 3008, 3605, 4201, 4794, 5384, 5970, 6554, 7133, 7708, 8278, 8843, 9403, 9957, 10506, 11048, 11583,
+	12111, 12399, 12565, 12723, 12873, 13015, 13150, 13276, 13395, 13506, 13608, 13702, 13788, 13866, 13935, 13996, 14049,
+	14093, 14128, 14156, 14174, 14184, 14185, 14178, 14163, 14139, 14106, 14065, 14015, 13957, 13890, 13816, 13732, 13641,
+	13541, 13433, 13317, 13193, 13062, 12922, 12774, 12619, 12456, 12286, 12456, 12619, 12774, 12922, 13062, 13193, 13317,
+	13433, 13541, 13641, 13732, 13816, 13890, 13957, 14015, 14065, 14106, 14139, 14163, 14178, 14185, 14184, 14174, 14156,
+	14128, 14093, 14049, 13996, 13935, 13866, 13788, 13702, 13608, 13506, 13395, 13276, 13150, 13015, 12873, 12723, 12565,
+	12399, 12111, 11583, 11048, 10506, 9957, 9403, 8843, 8278, 7708, 7133, 6554, 5970, 5384, 4794, 4201, 3605, 3008, 2408, 1808,
+	1206, 603, 0, -603, -1206, -1808, -2408, -3008, -3605, -4201, -4794, -5384, -5970, -6554, -7133, -7708, -8278, -8843, -9403,
+	-9957, -10506, -11048, -11583, -12111, -12399, -12565, -12723, -12873, -13015, -13150, -13276, -13395, -13506, -13608,
+	-13702, -13788, -13866, -13935, -13996, -14049, -14093, -14128, -14156, -14174, -14184, -14185, -14178, -14163, -14139,
+	-14106, -14065, -14015, -13957, -13890, -13816, -13732, -13641, -13541, -13433, -13317, -13193, -13062, -12922, -12774,
+	-12619, -12456, -12286, -12456, -12619, -12774, -12922, -13062, -13193, -13317, -13433, -13541, -13641, -13732, -13816,
+	-13890, -13957, -14015, -14065, -14106, -14139, -14163, -14178, -14185, -14184, -14174, -14156, -14128, -14093, -14049,
+	-13996, -13935, -13866, -13788, -13702, -13608, -13506, -13395, -13276, -13150, -13015, -12873, -12723, -12565, -12399,
+	-12111, -11583, -11048, -10506, -9957, -9403, -8843, -8278, -7708, -7133, -6554, -5970, -5384, -4794, -4201, -3605, -3008,
+	-2408, -1808, -1206, -603, 0, //
+};
+VOID calc_jakctrl_bldc_pwm(struct jakctrl_bldc *bldc, sint u0omeg, sint d0arrhalf, sint u0norm)
+{
+	bldc->pwm.W0cmprHalf = u0_mpy(u0norm, d0arrhalf);
+	bldc->pwm.u0cita = (u0omeg + bldc->pwm.u0cita) & u0max;
+	bldc->pwm.d0tmp1 = a0_lookword(cw257pwm, (bldc->pwm.u0cita), 257);
+	bldc->pwm.d0tmp2 = a0_lookword(cw257pwm, (bldc->pwm.u0cita + (u0one / 3)) & u0max, 257);
+	bldc->pwm.d0tmp3 = a0_lookword(cw257pwm, (bldc->pwm.u0cita - (u0one / 3)) & u0max, 257);
+	bldc->pwm.W0cmprA = d0arrhalf + g0_mpy(bldc->pwm.d0tmp1, bldc->pwm.W0cmprHalf);
+	bldc->pwm.W0cmprB = d0arrhalf + g0_mpy(bldc->pwm.d0tmp2, bldc->pwm.W0cmprHalf);
+	bldc->pwm.W0cmprC = d0arrhalf + g0_mpy(bldc->pwm.d0tmp3, bldc->pwm.W0cmprHalf);
+}
+//
+VOID itrr_jakctrl_bldc(struct jakctrl_bldc *bldc, sint d0arr, sint d0izorg, sint d0uzorg)
+{
+	if (bldc->para == 0) return;
+	if (bldc->feed == 0) return;
+	//
+	if (d0izorg > 3900) estop(bldc);
+	//
+	bldc->fast.u0omeg = d0_slop(bldc->hz.u0omeg, bldc->fast.u0omeg, u0one >> bldc->frwd.shift);
+	bldc->fast.u0uexe = d0_slop(bldc->frwd.u0uexe, bldc->fast.u0uexe, u0one >> bldc->frwd.shift);
+	//
+	calc_jakctrl_bldc_pwm(bldc, bldc->fast.u0omeg, d0arr >> 1, bldc->fast.u0uexe);
+}
+static VOID work_feed(struct jakctrl_bldc *bldc)
+{
+	bldc->feed->f0uz = f0_sat(bldc->feed->f0uz, 1.0e+6f, bldc->para->f0uzmx * 0.25f);
+	bldc->feed->f0uzf = f0_iir(bldc->feed->f0uzf, bldc->feed->f0uz, 0.01f); //100ms
+	bldc->feed->f0uzuse = bldc->feed->f0uzf * 0.667f;
+	bldc->feed->f0isf = f0_iir(bldc->feed->f0isf, f0_abs(bldc->feed->f0is), 0.1f);	//10ms
+	//
+	bldc->f0iste = bldc->para->f0wtpk / bldc->para->f0uzmx / 0.5f;
+	bldc->f0iidl = bldc->f0iste * 0.334f;
+	bldc->f0zs = f0_root2(sqr(bldc->para->f0rs) + sqr(_2pai*bldc->hz.f0rt*bldc->para->f0ls));
+	bldc->hz.f0pk = f0hzpk_fr_f0uzuse(bldc->para->f0kve, bldc->feed->f0uzuse);
+	bldc->hz.u0rq = bldc->d0starfact * bldc->feed->m0hz1 << 10;
+	bldc->f0acpr2hzpk = bldc->para->f0msec2hzpk / bldc->para->f0msec2tepk;
+	bldc->ac.u0rabs = u0one / (sint) bldc->para->f0msec2tepk;
+}
+static VOID work_hz(struct jakctrl_bldc *bldc)
+{
+	bldc->hz.u0rabs = 16 + d0_abs(u0_fr_f0(bldc->hz.f0pk, bldc->ac.f0rt)); //u0hzrabs_fr_f0acrt(bldc->ac.f0rt, bldc->hz.f0pk);
+	bldc->hz.u0rt = d0_slop(bldc->hz.u0rq, bldc->hz.u0rt, bldc->hz.u0rabs);
+	bldc->hz.u0rtabs = d0_abs(bldc->hz.u0rt);
+	bldc->hz.f0rt = f0_fr_u0(bldc->hz.f0pk, bldc->hz.u0rt);
+	bldc->hz.u0omeg = bldc->hz.u0rt >> 5;
+}
+static VOID work_ac(struct jakctrl_bldc *bldc)
+{
+	bldc->ac.f0pkpr = f0acpk_fr_f0acpr2hzpk(bldc->f0acpr2hzpk, bldc->hz.f0pk);
+	bldc->ac.f0pkms = bldc->ac.f0pkpr / bldc->para->f0msec2tepk;
+	if (r0_samsgn(bldc->hz.u0rq, bldc->hz.u0rt))
+	{
+		bldc->ac.f0rq = f0_fr_u0(bldc->hz.f0pk, bldc->hz.u0rq - bldc->hz.u0rt);
+	}
+	else
+	{
+		bldc->ac.f0rq = f0_fr_u0(bldc->hz.f0pk, 0 - bldc->hz.u0rt);
+	}
+	bldc->ac.u0rq = d0_sat(u0_fr_f0(bldc->ac.f0pkpr, bldc->ac.f0rq), u0one, -u0one);
+	bldc->ac.u0rt = d0_slop(bldc->ac.u0rq, bldc->ac.u0rt, bldc->ac.u0rabs);
+	push_to_cir64(&bldc->cir64tert, 64, bldc->ac.u0rt);
+	bldc->ac.u0rtf = aver_of_cir64(&bldc->cir64tert);
+	bldc->ac.u0rtfabs = d0_sat(d0_abs(bldc->ac.u0rtf), u0one, u0one / 3);
+	bldc->ac.f0rt = f0_fr_u0(bldc->ac.f0pkms, bldc->ac.u0rtf);
+}
+static VOID work_frwd(struct jakctrl_bldc *bldc)
+{
+	bldc->frwd.f0uexppk = bldc->f0iste * bldc->f0zs;
+	//
+	if (r0_samsgn(bldc->hz.u0rt, bldc->ac.u0rtf))
+	{
+		bldc->frwd.f0uexp = f0_fr_u0(bldc->frwd.f0uexppk, bldc->ac.u0rtfabs);
+	}
+	else	//GEN
+	{
+		bldc->frwd.f0uexp = f0_fr_u0(bldc->frwd.f0uexppk, u0one / 3);
+	}
+	if (bldc->frwd.f0uexp < 30.0)
+	{
+		asm("nop");
+	}
+	bldc->f0iff = bldc->frwd.f0uexp / bldc->f0zs;
+	bldc->f0iex = f0_sat(bldc->feed->f0isf - bldc->f0iff, 1.0e+6f, 0.0f);
+//	bldc->frwd.f0uextpk = f0_abs(bldc->feed->f0isf * bldc->f0zs * 0.8f); //f0_sat(bldc->feed->f0isf - bldc->f0iidl, 1.0e+9f, 0.0f) * bldc->f0zs * 0.8f;
+	bldc->frwd.f0uext = bldc->f0iex * bldc->f0zs * 0.8f; //f0_fr_u0(bldc->frwd.f0uextpk, u0one - bldc->ac.u0rtfabs);
+
+	bldc->frwd.f0uidl = 0;	//bldc->f0iidl * bldc->f0zs;
+	bldc->frwd.f0ute = bldc->frwd.f0uexp + bldc->frwd.f0uext + bldc->frwd.f0uidl;
+	//
+	bldc->frwd.f0uemf = f0_fr_u0(bldc->feed->f0uzuse, bldc->hz.u0rtabs);
+	bldc->frwd.f0uexe = f0_sat(bldc->frwd.f0uemf + bldc->frwd.f0ute, bldc->feed->f0uzf, 0);
+	bldc->frwd.u0uexe = d0_sat(u0_fr_f0(bldc->feed->f0uzf, bldc->frwd.f0uexe), u0one, 0);
+	bldc->frwd.shift = 5 + 7; //5 32k 7 127
+}
+VOID work_star(struct jakctrl_bldc *bldc)
+{
+	bldc->f0idz = 0.1f + bldc->frwd.f0uexe / bldc->f0zs;
+	if (bldc->feed->f0isf > bldc->f0idz)
+	{
+		stop(bldc);
+	}
+	if (bldc->feed->f0uz > bldc->para->f0uzmx) estop(bldc);
+	//
+	if (bldc->d0star++ < 0) //normal close
+	{
+		bldc->d0starfact = 0;
+	}
+	else //
+	if (bldc->d0star == 0)
+	{
+		bldc->d0starfact = 0;
+		PWMONOFF(off);
+	}
+	else //
+	if (bldc->d0star == 1000)
+	{
+		bldc->d0starfact = 0;
+		PWMONOFF(onn);
+	}
+	else //
+	if (bldc->d0star == 3000)
+	{
+		bldc->d0starfact = 1;
+	}
+	else //
+	if (bldc->d0star > 3000)
+	{
+		bldc->d0star = 3197;
+	}
+	else ;
+}
+void work_jakctrl_bldc(struct jakctrl_bldc *bldc, struct jakctrl_bldc_para *para, struct jakctrl_bldc_feed *feed)
+{
+	if (bldc->para == 0) bldc->para = para;
+	if (bldc->feed == 0) bldc->feed = feed;
+	//
+	work_star(bldc);
+	//
+	work_feed(bldc);
+	//
+	work1ms_jakctrl_ref(&bldc->s0ref, g0rq1, 12);
+	//
+	work_hz(bldc);
+	//
+	work_ac(bldc);
+	//
+	work_frwd(bldc);
+	//
+}

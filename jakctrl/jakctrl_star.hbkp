@@ -1,0 +1,14 @@
+/*
+ * jakctrl_star.h
+ *
+ *  Created on: Mar 26, 2025
+ *      Author: JAK
+ */
+
+#ifndef THIRD_PARTY_JAKCTRL_JAKCTRL_STAR_H_
+#define THIRD_PARTY_JAKCTRL_JAKCTRL_STAR_H_
+//
+void jakctrl_dustar(word *w1flag, word startime);
+void jakctrl_restar(word *w1flag);
+//
+#endif /* THIRD_PARTY_JAKCTRL_JAKCTRL_STAR_H_ */

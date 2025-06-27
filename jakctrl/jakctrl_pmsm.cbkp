@@ -1,0 +1,161 @@
+//
+#include "jakctrl.h"
+//
+VOID jakctrl_pmsm_step32k(struct jakctrl_pmsm *ptr, const sint d0arr)
+{
+	ptr->step.u0omeg = d0_log2firsint(&ptr->fir64omeg32k, ptr->ff.u0omeg);
+	ptr->step.u0norm = d0_log2firsint(&ptr->fir64norm32k, ptr->ff.u0norm);
+	jakctrl_pwm(&ptr->pwm8, d0arr, ptr->step.u0norm, ptr->step.u0omeg, u0one / 3);
+	jakctrl_pmsm_cb_cmpr(ptr->pwm8.d8cmpr[0], ptr->pwm8.d8cmpr[1], ptr->pwm8.d8cmpr[2]); //, d0cmpr4);
+}
+VOID star(struct jakctrl_pmsm *ptr)
+{
+	if (ptr->view.m0ixfb > (sint) ptr->s1para->f0ihalt3)
+	{
+		ptr->flag.e0faut = jakctrl_fautSET(ptr->flag.e0faut, jakfaut_ht);
+	}
+	else
+	{
+		ptr->flag.e0faut = jakctrl_fautCLR(ptr->flag.e0faut, jakfaut_ht);
+	}
+	if (ptr->view.m0uzfb > ptr->s1para->m0ov)
+	{
+		ptr->flag.e0faut = jakctrl_fautSET(ptr->flag.e0faut, jakfaut_ov);
+	}
+	else
+	{
+		ptr->flag.e0faut = jakctrl_fautCLR(ptr->flag.e0faut, jakfaut_ov);
+	}
+//
+	if (0 != ptr->flag.e0faut)
+	{
+		jakctrl_pmsm_restart(ptr);
+	}
+//
+	if (0 == ptr->flag.w0star)
+	{
+		jakctrl_pmsm_cb_pwmH(efals);
+		jakctrl_pmsm_cb_pwmL(efals);
+	}
+	if (ptr->s1para->msecHalf == ptr->flag.w0star)
+	{
+		jakctrl_pmsm_cb_pwmL(etrue);
+	}
+	if (ptr->s1para->msecTAIL == ptr->flag.w0star)
+	{
+		jakctrl_pmsm_cb_pwmH(etrue);
+	}
+	if (ptr->flag.w0star++ > ptr->s1para->msecSTAR) ptr->flag.w0star = ptr->s1para->msecSTAR + 1000;
+}
+VOID workTE(struct jakctrl_pmsm *ptr)
+{
+	ptr->hz.W0rq = d0_sat(ptr->s1feed->W0hzrq, +ptr->lm.W0hzmx, -ptr->lm.W0hzmx); //d0_iir(ptr->hz.W0rq, d0_sat(ptr->s1feed->W0hzrq, +ptr->lm.W0hzmx, -ptr->lm.W0hzmx), 32); //32ms
+	if (r0_oppsgn(ptr->hz.W0rq, ptr->hz.W0rt))
+	{
+		ptr->ac.dummy = (0 - ptr->hz.W0rt) / ptr->s1para->msecPKTE;
+	}
+	else ptr->ac.dummy = (ptr->hz.W0rq - ptr->hz.W0rt) / ptr->s1para->msecPKTE;
+//
+	ptr->ac.W0rq = d0_sat(ptr->ac.dummy, ptr->s1para->W0acpk, -ptr->s1para->W0acpk);
+	ptr->ac.n0rq1 = n0_div(ptr->ac.W0rq, ptr->s1para->W0acpk);
+	ptr->ac.n0rt1 = d0_slop(ptr->ac.n0rq1, ptr->ac.n0rt1, ptr->s1para->n0ac1ra1k);
+	ptr->ac.n0rt1fir = d0_log2firsint(&ptr->fir64rt, ptr->ac.n0rt1);
+	ptr->ac.W0rt = n0_mpy(ptr->ac.n0rt1fir, ptr->s1para->W0acpk);
+}
+VOID workHZ(struct jakctrl_pmsm *ptr)
+{
+	ptr->hz.W0rt = d0_slop(ptr->hz.W0rq, ptr->hz.W0rt, 8 + d0_abs(ptr->ac.W0rt * 7 >> 2));
+}
+VOID view(struct jakctrl_pmsm *ptr)
+{
+	ptr->view.m0uzfb = d0_iir(ptr->view.m0uzfb, ptr->s1feed->m0uzfb, 128);
+	ptr->view.m0hzmx = ptr->lm.W0hzmx >> 6;
+	ptr->view.m0hzrt = ptr->hz.W0rt >> 6;
+	ptr->view.d0omegrt = ptr->view.m0hzrt * 25 >> (2 + 10);	// in fact 25=2π*4
+	if (ptr->s1feed->r0test == 0)
+	{
+		ptr->view.g0ixfb = d0_iir(ptr->view.g0ixfb, ptr->s1feed->m0ixfb << 4, 512);
+		ptr->view.m0ixfb = d0_iir(ptr->view.m0ixfb, ptr->s1feed->m0ixfb, 16);
+	}
+	else
+	{
+		ptr->view.g0ixfb = d0_iir(ptr->view.g0ixfb, ptr->s1feed->m0ixfbtest << 4, 512);
+		ptr->view.m0ixfb = d0_iir(ptr->view.m0ixfb, ptr->s1feed->m0ixfbtest, 16);
+	}
+}
+VOID frwd(struct jakctrl_pmsm *ptr)
+{
+	ptr->ff.m0uemf = d0_abs(ptr->hz.W0rt / ptr->s1para->d0kvee);
+	if (r0_oppsgn(ptr->ac.W0rt, ptr->hz.W0rt))
+	{
+		ptr->ff.m0uexp = 0;	//d0_abs(n0_mpy(ptr->ac.n0rt1fir, ptr->lm.m0uexp));
+	}
+	else ptr->ff.m0uexp = d0_abs(n0_mpy(ptr->ac.n0rt1fir, ptr->lm.m0uexp));
+	ptr->ff.m0uext = d0_abs(ptr->lm.m0uext);
+	if (ptr->s1para->r0cali)
+	{
+		ptr->ff.m0ueff = ptr->lm.m0uexp >> 20;
+	}
+	else ptr->ff.m0ueff = ptr->lm.m0uexp >> 2;
+	ptr->ff.m0uexe = d0_sat0(ptr->ff.m0uemf + ptr->ff.m0uexp + ptr->ff.m0uext + ptr->ff.m0ueff, ptr->view.m0uzfb * 60 >> 6);
+	ptr->ff.u0norm = (u0one >> 5) + u0_div(ptr->ff.m0uexe, ptr->view.m0uzfb);
+	ptr->ff.u0omeg = ptr->hz.W0rt >> 11;	//ptr->view.m0hzrt / 5;	// *6553.6/32768
+}
+VOID limi(struct jakctrl_pmsm *ptr)
+{
+	ptr->lm.f0ue = (real) (ptr->ff.m0uemf + 1) * 1.0e-3f;
+	ptr->lm.f0uz = (real) (ptr->view.m0uzfb >> 10);
+	ptr->lm.f0omeg = (real) ptr->view.d0omegrt;
+//	calc zs1k
+	ptr->s1para->f0xs = ptr->lm.f0omeg * ptr->s1para->f0ls;
+	ptr->s1para->f0zs = f0_root2(sqr(ptr->s1para->f0rs) + sqr(ptr->s1para->f0xs));
+	ptr->s1para->m0zs = (sint) (ptr->s1para->f0zs * 1.0e+3f);
+//	calc uexp1k
+	ptr->lm.f0ixwt = ptr->s1para->f0wt / ptr->lm.f0ue;
+	ptr->lm.m0ixte = d0_sat0((sint) (ptr->s1para->f0it * 1.0e+3f), (sint) (ptr->lm.f0ixwt * 1.0e+3f));
+	ptr->lm.m0uexp = m0_mpy(ptr->lm.m0ixte, ptr->s1para->m0zs) * 3 >> 2;
+//	calc uext1k
+	ptr->lm.m0uext = d0_sat0(m0_mpy(ptr->view.g0ixfb >> 4, ptr->s1para->m0zs * 3 >> 2), ptr->lm.m0uexp);
+//	calc acmx
+	ptr->s1para->W0hzpk = m0_mpy(ptr->s1para->d0uzov * 600, ptr->s1para->d0kvee) << (16 - 6);
+	ptr->s1para->W0acpk = ptr->s1para->W0hzpk / ptr->s1para->msecPKHZ;
+	ptr->lm.W0hzmx = (sint64) ptr->s1para->W0hzpk * 45LL >> 6;
+}
+VOID jakctrl_pmsm_ctrl1k(struct jakctrl_pmsm *ptr)
+{
+	view(ptr);
+	star(ptr);
+	limi(ptr);
+	workTE(ptr);
+	workHZ(ptr);
+	frwd(ptr);
+}
+void jakctrl_pmsm_init(struct jakctrl_pmsm *ptr, struct jakctrl_pmsm_para *para, struct jakctrl_pmsm_feed *feed)
+{
+	ptr->s1para = para;
+	ptr->s1feed = feed;
+	ptr->fir64rt.dnpool = ptr->n64ac1rt9;
+	ptr->fir64rt.d0dep = 64;
+	ptr->fir64norm32k.dnpool = ptr->u64norm;
+	ptr->fir64norm32k.d0dep = 64;
+	ptr->fir64omeg32k.dnpool = ptr->u64omeg;
+	ptr->fir64omeg32k.d0dep = 64;
+//
+	ptr->s1para->m0ov = ptr->s1para->d0uzov << 10;
+	ptr->s1para->n0ac1ra1k = n0one / ptr->s1para->msecPKTE;
+	ptr->s1para->msecHalf = ptr->s1para->msecSTAR >> 1;
+	ptr->s1para->msecTAIL = ptr->s1para->msecSTAR * 3 >> 2;
+	ptr->s1para->f0ie = 10.0f / (real) ptr->s1para->d0kvee / (ptr->s1para->f0ls + 1.0e-6f);
+	ptr->s1para->f0it = ptr->s1para->f0wtpk * 1.25f / ptr->s1para->d0uzok;
+	ptr->s1para->f0ihalt3 = ptr->s1para->f0it * 1500.0f;
+//
+	jakctrl_pmsm_ctrl1k(ptr);
+}
+VOID jakctrl_pmsm_restart(struct jakctrl_pmsm *ptr)
+{
+	ptr->flag.w0star = 0;
+	ptr->hz.W0rt = 0;
+	ptr->ac.n0rt1 = 0;
+	ptr->ac.n0rt1fir = 0;
+	jakmath_firsint_zero(&ptr->fir64rt);
+}

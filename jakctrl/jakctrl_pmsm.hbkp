@@ -1,0 +1,153 @@
+/*
+ * jakctrl_pmsm.h
+ *
+ *  Created on: Jan 15, 2025
+ *      Author: JAK
+ */
+
+#ifndef THIRD_PARTY_JAKCTRL_JAKCTRL_PMSM_H_
+#define THIRD_PARTY_JAKCTRL_JAKCTRL_PMSM_H_
+//
+#define	hzat1v(X)	(X)
+//
+struct jakctrl_pmsm_para
+{
+	sint d0kvee;
+	sint d0uzok;
+
+	sint msecPKHZ;
+	sint msecPKTE;
+	sint msecSTAR;
+	//
+	sint n0ac1ra1k;
+	sint msecHalf;
+	sint msecTAIL;
+	//
+	sint r0ge;
+	sint r0cali;
+	sint m0zs;
+	sint m0ov;
+	sint W0hzpk;
+	sint W0acpk;
+	//
+	real f0oc;
+	real f0wtpk;
+	real f0ie;
+	real f0it;
+	real f0ihalt3;
+	real f0ls;
+	real f0rs;
+	//
+	real f0zs;
+	real f0xs;
+};
+struct jakctrl_pmsm_limi
+{
+	sint W0hzmx;
+	//
+	sint m0ixte;
+	sint m0ixmx;
+	//
+	sint d0uzov;
+	//
+	sint m0uexp;
+	sint m0uext;
+	//
+	real f0is;
+	real f0ixwt;
+	real f0ue;
+	real f0omeg;
+	real f0uz;
+	real f0ixvf;
+	real f0ixmx;
+};
+struct jakctrl_pmsm_hz
+{
+	sint W0rq;
+	sint W0rt;
+};
+struct jakctrl_pmsm_ac
+{
+	sint dummy;
+	sint W0rq;
+	sint n0rq1;
+	sint n0rt1;
+	sint n0ra1;
+	sint n0rt1fir;
+	sint W0rt;
+};
+struct jakctrl_pmsm_feed
+{
+	sint r0test;
+	sint m0ixfb;
+	sint m0ixfbtest;
+	sint m0uzfb;
+	sint d0tmfb;
+	sint W0hzrq;
+};
+struct jakctrl_pmsm_frwd
+{
+	sint u0omeg;
+	sint u0norm;
+	sint m0uemf;
+	sint m0uexp;
+	sint m0uext;
+	sint m0ueff;
+	sint m0uexe;
+};
+struct jakctrl_pmsm_view
+{
+	sint m0hzmx;
+	sint m0hzrt;
+	sint d0omegrt;
+	sint g0ixfb;
+	sint m0ixfb;
+	sint m0uzfb;
+};
+struct jakctrl_pmsm_flag
+{
+	word w0star;
+	word w0egen;
+	word w0samp;
+	word w0ctrl;
+	word w0octest;
+	word w0ovtest;
+	word w0ottest;
+	word r0on;
+	enum jakmode e0mode;
+	enum jakfaut e0faut;
+};
+struct jakctrl_pmsm_step
+{
+	sint u0norm;
+	sint u0omeg;
+};
+struct jakctrl_pmsm
+{
+	struct jakctrl_pmsm_para *s1para;
+	struct jakctrl_pmsm_feed *s1feed;
+	struct jakctrl_pmsm_view view;
+	struct jakctrl_pmsm_flag flag;
+	struct jakctrl_pmsm_step step;
+	struct jakctrl_pmsm_frwd ff;
+	struct jakctrl_pmsm_hz hz;
+	struct jakctrl_pmsm_ac ac;
+	struct jakctrl_pmsm_limi lm;
+	struct jakctrl_pwm8 pwm8;
+	struct jakmath_fir fir64rt;
+	struct jakmath_fir fir64omeg32k;
+	struct jakmath_fir fir64norm32k;
+	sint n64ac1rt9[64];
+	sint u64omeg[64];
+	sint u64norm[64];
+};
+//
+void jakctrl_pmsm_init(struct jakctrl_pmsm *ptr, struct jakctrl_pmsm_para *para, struct jakctrl_pmsm_feed *feed);
+void jakctrl_pmsm_ctrl1k(struct jakctrl_pmsm *ptr);
+void jakctrl_pmsm_step32k(struct jakctrl_pmsm *ptr, const sint d0arr);
+void jakctrl_pmsm_restart(struct jakctrl_pmsm *ptr);
+void jakctrl_pmsm_cb_pwmL(sint on);
+void jakctrl_pmsm_cb_pwmH(sint on);
+void jakctrl_pmsm_cb_cmpr(sint d0cmpr1, sint d0cmpr2, sint d0cmpr3); //, sint d0cmpr4);
+//
+#endif /* THIRD_PARTY_JAKCTRL_JAKCTRL_PMSM_H_ */

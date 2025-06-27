@@ -1,0 +1,22 @@
+/*
+ * jakctrl_star.c
+ *
+ *  Created on: Mar 26, 2025
+ *      Author: JAK
+ */
+
+#include <jakctrl.h>
+//
+void jakctrl_dustar(word *w1flag, word startime)
+{
+//	*w1flag++;
+//	switch (*w1flag)
+//	{
+//	case (startime >> 1):
+//		break;
+//	}
+}
+void jakctrl_restar(word *w1flag)
+{
+
+}

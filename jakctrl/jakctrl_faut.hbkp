@@ -1,0 +1,30 @@
+/*
+ * jakctrl_faut.h
+ *
+ *  Created on: Jan 19, 2025
+ *      Author: JAK
+ */
+
+#ifndef THIRD_PARTY_JAKCTRL_JAKCTRL_FAUT_H_
+#define THIRD_PARTY_JAKCTRL_JAKCTRL_FAUT_H_
+//
+enum jakfaut_type
+{
+	jakfaut_nature = 0, jakfaut_manual = 1,
+};
+enum jakfaut
+{
+	jakfaut_no = 0x00, //
+	jakfaut_oc = 0x01, //
+	jakfaut_ov = 0x02, //
+	jakfaut_lv = 0x04, //
+	jakfaut_ot = 0x08, //
+	jakfaut_sp = 0x10, //
+	jakfaut_ht = 0x20, //
+	jakfaut_ff = 0xffffffff, //
+};
+enum jakfaut jakctrl_fautSET(enum jakfaut e0fautorg, enum jakfaut e0fautnew);
+enum jakfaut jakctrl_fautCLR(enum jakfaut e0fautorg, enum jakfaut e0fautnew);
+enum jakfaut jakctrl_e0_faut(enum jakfaut e0fautorg, const sint d0val, const sint d0mx, const sint d0mi, const enum jakfaut e0faut, const enum jakfaut_type e0type);
+//
+#endif /* THIRD_PARTY_JAKCTRL_JAKCTRL_FAUT_H_ */
