@@ -12,6 +12,7 @@
 #define		JAKUART		0
 #define		JAKFLASH	0
 #define		JAKTIM		1
+#define		JAKSPI		1
 //
 #include <main.h>
 #if JAKADC
@@ -25,6 +26,9 @@
 #endif
 #if JAKUART
 #include "jakstm32_usart.h"
+#endif
+#if JAKSPI
+#include "jakstm32_spi.h"
 #endif
 #include "stdint.h"
 #include "cmsis_os.h"
