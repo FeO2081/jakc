@@ -5,7 +5,7 @@
  *      Author: JAK
  */
 
-#include <jakctrl/jakctrl_pif.h>
+#include "jakctrl.h"
 //
 sint u0_jakctrl_pif(struct jakctrl_pif *pif, struct jakctrl_pif_fact *fact, struct jakctrl_pif_feed *feed)
 {

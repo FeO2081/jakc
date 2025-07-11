@@ -5,8 +5,8 @@
  *      Author: JAK
  */
 #include "jakstm32.h"
-#include "../jakmath/jakmath.h"
 //
+#if JAKADC
 FASTFUNC void jakstm32_adc_aver(const uint16_t *wxbuff, const int chnlcnt, const int sampdep, int *dxavrg)
 {
 	if (wxbuff == 0) return;
@@ -64,3 +64,28 @@ __weak void call_samp(enum flag_samp e0flag)
 __weak void call_hwoc(int d0iacorg)
 {
 }
+#else
+void jakstm32_adc_aver(const uint16_t *wxbuff, const int chnlcnt, const int sampdep, int *dxavrg)
+{
+}
+int jakstm32_adc_m0ux(const int d0ad12res)
+{
+	return 0;
+}
+void jakstm32_adc_ject(int a4av[4])
+{
+}
+//
+void jakstm32_adc_init(uint16_t *adcbuff, int dep)
+{
+}
+void jakstm32_adc_jnit()
+{
+}
+void call_samp(int e0flag)
+{
+}
+void call_hwoc(int d0iacorg)
+{
+}
+#endif

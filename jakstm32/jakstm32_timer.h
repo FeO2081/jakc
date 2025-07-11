@@ -24,6 +24,8 @@ struct jakstm32_runtime
 	int runtimex;
 	int runtime;
 	int runtpr;
+	int runtpr_usec;
+	int runtim_usec;
 };
 void jakstm32_runtimeSTAR(struct jakstm32_runtime *ptr);
 void jakstm32_runtimeOVER(struct jakstm32_runtime *ptr);

@@ -8,11 +8,11 @@
 #ifndef THIRD_PARTY_JAKSTM32_JAKSTM32_H_
 #define THIRD_PARTY_JAKSTM32_JAKSTM32_H_
 //
-#define		JAKADC		1
+#define		JAKADC		0
 #define		JAKUART		0
 #define		JAKFLASH	0
 #define		JAKTIM		1
-#define		JAKSPI		1
+#define		JAKSPI		0
 //
 #include <main.h>
 #if JAKADC

@@ -8,6 +8,7 @@
 #ifndef THIRD_PARTY_JAKC_JAKC_H_
 #define THIRD_PARTY_JAKC_JAKC_H_
 //
+#include "jakmath/jakmath.h"
 #include "jakctrl/jakctrl.h"
 #include "jakstm32/jakstm32.h"
 //

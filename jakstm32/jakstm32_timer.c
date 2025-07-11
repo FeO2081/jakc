@@ -4,20 +4,23 @@
  *  Created on: Jan 9, 2025
  *      Author: JAK
  */
-#include "../jakmath/jakmath.h"
 #include "tim.h"
-#include "jakstm32_timer.h"
+#include "jakmath/jakmath.h"
+#include "jakstm32.h"
 //
+static int jd0usec = 1000;
 FASTFUNC void jakstm32_runtimeSTAR(struct jakstm32_runtime *ptr)
 {
 	int dum = ptr->runtimex - SysTick->VAL;
 	ptr->runtimex = SysTick->VAL;
 	ptr->runtpr = dum < 0 ? SysTick->LOAD + dum : dum;
+	ptr->runtpr_usec = ptr->runtpr / jd0usec;
 }
 FASTFUNC void jakstm32_runtimeOVER(struct jakstm32_runtime *ptr)
 {
 	int dum = ptr->runtimex - SysTick->VAL;
 	ptr->runtime = dum < 0 ? SysTick->LOAD + dum : dum;
+	ptr->runtim_usec = ptr->runtime / jd0usec;
 }
 //
 static void mastTIMX(TIM_TypeDef *timx, sint d0arr)
@@ -55,9 +58,9 @@ static LL_RCC_ClocksTypeDef clks;
 void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 {
 	LL_RCC_GetSystemClocksFreq(&clks);
-	uint16_t usec = clks.SYSCLK_Frequency / 1000 / 1000;
+	jd0usec = clks.SYSCLK_Frequency / 1000 / 1000;
 	uint16_t arr = 0xffff;
-	if (e0arr == arr_16khz) arr = usec * 32;
+	if (e0arr == arr_16khz) arr = jd0usec * 32;
 	//
 	slavTIMX(TIM3, arr);
 	//
@@ -79,7 +82,7 @@ void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_LOW);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_LOW);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_LOW);
-		LL_TIM_OC_SetDeadTime(TIM1, usec);
+		LL_TIM_OC_SetDeadTime(TIM1, jd0usec);
 		break;
 	case polar_H1L0:
 		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCPOLARITY_LOW);
@@ -88,7 +91,7 @@ void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_HIGH);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_HIGH);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_HIGH);
-		LL_TIM_OC_SetDeadTime(TIM1, usec);
+		LL_TIM_OC_SetDeadTime(TIM1, jd0usec);
 		break;
 	case polar_H1:
 		LL_TIM_OC_SetDeadTime(TIM1, 0);
@@ -128,10 +131,6 @@ VOID jakstm32_timer_updtPWM(int c1, int c2, int c3, int c4)
 	TIM1->CCR3 = c3;
 	TIM1->CCR4 = c4;
 }
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-//{
-//	jakstm32_timer_itrrPWM();
-//}
 void jakstm32_timer_init(struct jakstm32_timer_config *cfg)
 {
 	TIM_TypeDef *timx;
@@ -141,8 +140,8 @@ void jakstm32_timer_init(struct jakstm32_timer_config *cfg)
 	if (cfg->timerNumb == 4) timx = TIM4;
 	//
 	LL_RCC_GetSystemClocksFreq(&clks);
-	uint16_t usec = clks.SYSCLK_Frequency / 1000 / 1000;
-	uint16_t arr = usec * (int) (0.5e+6f / cfg->f0freq);
+	jd0usec = clks.SYSCLK_Frequency / 1000 / 1000;
+	uint16_t arr = jd0usec * (int) (0.5e+6f / cfg->f0freq);
 	mastTIMX(timx, arr);
 }
 
