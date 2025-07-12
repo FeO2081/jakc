@@ -33,6 +33,7 @@
 #include "stdint.h"
 #include "cmsis_os.h"
 //
-
+extern int d0corehz;
+extern int d0usec;
 //
 #endif /* THIRD_PARTY_JAKSTM32_JAKSTM32_H_ */

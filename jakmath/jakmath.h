@@ -18,6 +18,7 @@ typedef unsigned char CHAR;
 typedef float real;
 //
 #define		FASTFUNC	__attribute__((optimize("Ofast")))
+#define		WEAK		__attribute__((weak))
 #define		VOID		FASTFUNC void
 //
 enum

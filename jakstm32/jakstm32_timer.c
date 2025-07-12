@@ -8,19 +8,18 @@
 #include "jakmath/jakmath.h"
 #include "jakstm32.h"
 //
-static int jd0usec = 1000;
 FASTFUNC void jakstm32_runtimeSTAR(struct jakstm32_runtime *ptr)
 {
 	int dum = ptr->runtimex - SysTick->VAL;
 	ptr->runtimex = SysTick->VAL;
 	ptr->runtpr = dum < 0 ? SysTick->LOAD + dum : dum;
-	ptr->runtpr_usec = ptr->runtpr / jd0usec;
+	ptr->runtpr_usec = ptr->runtpr / d0usec;
 }
 FASTFUNC void jakstm32_runtimeOVER(struct jakstm32_runtime *ptr)
 {
 	int dum = ptr->runtimex - SysTick->VAL;
 	ptr->runtime = dum < 0 ? SysTick->LOAD + dum : dum;
-	ptr->runtim_usec = ptr->runtime / jd0usec;
+	ptr->runtim_usec = ptr->runtime / d0usec;
 }
 //
 static void mastTIMX(TIM_TypeDef *timx, sint d0arr)
@@ -58,9 +57,9 @@ static LL_RCC_ClocksTypeDef clks;
 void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 {
 	LL_RCC_GetSystemClocksFreq(&clks);
-	jd0usec = clks.SYSCLK_Frequency / 1000 / 1000;
+	d0usec = clks.SYSCLK_Frequency / 1000 / 1000;
 	uint16_t arr = 0xffff;
-	if (e0arr == arr_16khz) arr = jd0usec * 32;
+	if (e0arr == arr_16khz) arr = d0usec * 32;
 	//
 	slavTIMX(TIM3, arr);
 	//
@@ -82,7 +81,7 @@ void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_LOW);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_LOW);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_LOW);
-		LL_TIM_OC_SetDeadTime(TIM1, jd0usec);
+		LL_TIM_OC_SetDeadTime(TIM1, d0usec);
 		break;
 	case polar_H1L0:
 		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCPOLARITY_LOW);
@@ -91,7 +90,7 @@ void jakstm32_timer_initPWM3(enum pwmarr e0arr, enum polar e0polar)
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_HIGH);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_HIGH);
 		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_HIGH);
-		LL_TIM_OC_SetDeadTime(TIM1, jd0usec);
+		LL_TIM_OC_SetDeadTime(TIM1, d0usec);
 		break;
 	case polar_H1:
 		LL_TIM_OC_SetDeadTime(TIM1, 0);
@@ -140,9 +139,55 @@ void jakstm32_timer_init(struct jakstm32_timer_config *cfg)
 	if (cfg->timerNumb == 4) timx = TIM4;
 	//
 	LL_RCC_GetSystemClocksFreq(&clks);
-	jd0usec = clks.SYSCLK_Frequency / 1000 / 1000;
-	uint16_t arr = jd0usec * (int) (0.5e+6f / cfg->f0freq);
+	d0usec = clks.SYSCLK_Frequency / 1000 / 1000;
+	uint16_t arr = d0usec * (int) (0.5e+6f / cfg->f0freq);
 	mastTIMX(timx, arr);
 }
-
+void jakstm32_pwm3pn_init(float f0freq, enum polar e0polar)
+{
+	LL_RCC_GetSystemClocksFreq(&clks);
+	d0usec = clks.SYSCLK_Frequency / 1000 / 1000;
+	uint16_t d0arr = (uint16_t) ((float) d0usec * 0.5e+6f / f0freq);
+//
+	LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_ENABLE);
+	LL_TIM_SetCounterMode(TIM1, LL_TIM_COUNTERMODE_CENTER_UP_DOWN);
+	LL_TIM_SetAutoReload(TIM1, d0arr);
+	LL_TIM_EnableIT_UPDATE(TIM1);
+	//
+	switch (e0polar)
+	{
+	case polar_H1L1:
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCPOLARITY_HIGH);
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCPOLARITY_HIGH);
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCPOLARITY_HIGH);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_LOW);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_LOW);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_LOW);
+		LL_TIM_OC_SetDeadTime(TIM1, d0usec);
+		break;
+	case polar_H1L0:
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCPOLARITY_LOW);
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCPOLARITY_LOW);
+		LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCPOLARITY_LOW);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH1N, LL_TIM_OCIDLESTATE_HIGH);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH2N, LL_TIM_OCIDLESTATE_HIGH);
+		LL_TIM_OC_SetIdleState(TIM1, LL_TIM_CHANNEL_CH3N, LL_TIM_OCIDLESTATE_HIGH);
+		LL_TIM_OC_SetDeadTime(TIM1, d0usec);
+		break;
+	case polar_H1:
+		LL_TIM_OC_SetDeadTime(TIM1, 0);
+	}
+	LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH4);
+	d0arr = d0arr >> 1;
+	TIM1->CCR1 = d0arr;
+	TIM1->CCR2 = d0arr;
+	TIM1->CCR3 = d0arr;
+	TIM1->CCR4 = d0arr;
+	jakstm32_timer_starPWMN();
+	LL_TIM_EnableAllOutputs(TIM1);
+	LL_TIM_EnableCounter(TIM1);
+}
+WEAK void jakstm32_timer_itrrPWM()
+{
+}
 //

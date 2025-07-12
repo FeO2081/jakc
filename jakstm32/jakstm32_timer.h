@@ -53,6 +53,7 @@ void jakstm32_timer_starPWMP();
 void jakstm32_timer_starPWMN();
 void jakstm32_timer_stopPWMP();
 void jakstm32_timer_stopPWMN();
+void jakstm32_pwm3pn_init(float f0freq, enum polar e0polar);
 //
 void jakstm32_timer_updtPWM(int c1, int c2, int c3, int c4);
 void jakstm32_timer_itrrPWM();
