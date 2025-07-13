@@ -8,7 +8,6 @@
 #ifndef THIRD_PARTY_JAKSTM32_JAKSTM32_TIMER_H_
 #define THIRD_PARTY_JAKSTM32_JAKSTM32_TIMER_H_
 //
-#include "main.h"
 #include "tim.h"
 //
 struct jakstm32_timer_config

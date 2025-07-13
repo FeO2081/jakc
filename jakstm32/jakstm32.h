@@ -9,10 +9,13 @@
 #define THIRD_PARTY_JAKSTM32_JAKSTM32_H_
 //
 #define		JAKADC		0
+#define		JAKADCLL	1
 #define		JAKUART		0
 #define		JAKFLASH	0
 #define		JAKTIM		1
 #define		JAKSPI		0
+//
+#define		NOP		asm("nop")
 //
 #include <main.h>
 #if JAKADC
@@ -20,6 +23,9 @@
 #endif
 #if JAKFLASH
 #include "jakstm32_flash.h"
+#endif
+#if JAKADCLL
+#include "jakstm32_adcll.h"
 #endif
 #if JAKTIM
 #include "jakstm32_timer.h"
