@@ -29,6 +29,6 @@ void jakstm32_adcll_init(word wxsamp[], int len)
 }
 VOID jakstm32_adcll_samp()
 {
-	LL_ADC_REG_StopConversion(ADC1);
+//	LL_ADC_REG_StopConversion(ADC1);
 	LL_ADC_REG_StartConversion(ADC1);
 }

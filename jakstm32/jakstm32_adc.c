@@ -4,6 +4,8 @@
  *  Created on: Sep 17, 2024
  *      Author: JAK
  */
+#include "jakmath/jakmath.h"
+#include "adc.h"
 #include "jakstm32.h"
 //
 #if JAKADC
@@ -35,7 +37,7 @@ sint jakstm32_adc_m0ux(const int d0ad12res)
 void jakstm32_adc_init(uint16_t *adcbuff, int dep)
 {
 	HAL_ADCEx_Calibration_Start(&hadc1);
-//	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcbuff, dep);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcbuff, dep);
 }
 void jakstm32_adc_jnit()
 {
@@ -49,6 +51,11 @@ VOID jakstm32_adc_ject(sint a4av[4])
 //	a4av[2] = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_3);
 //	a4av[3] = LL_ADC_INJ_ReadConversionData12(ADC1, LL_ADC_INJ_RANK_4);
 //	LL_ADC_INJ_StartConversionExtTrig(ADC1, LL_ADC_INJ_TRIG_EXT_RISING);
+}
+VOID jakstm32_adc_samp(WORD WXBUFF[], int dep)
+{
+	HAL_ADC_Stop_DMA(&hadc1);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) WXBUFF, dep);
 }
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {

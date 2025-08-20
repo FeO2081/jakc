@@ -43,7 +43,7 @@ void push_to_cir64(struct cir64 *ptr, const sint dep, sint val)
 	if (ptr->d0idx >= dep) ptr->d0idx = 0;
 	ptr->d64pool[ptr->d0idx++] = val;
 }
-sint aver_of_cir64(struct cir64 *ptr)
+sint d0_aver_of_cir64(struct cir64 *ptr)
 {
 	sint64 sum = 0;
 	for (int i = 0; i < ptr->d0dep; i++)

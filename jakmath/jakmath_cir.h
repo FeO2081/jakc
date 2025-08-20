@@ -25,7 +25,7 @@ struct cir64
 	int d0curr;
 };
 void push_to_cir64(struct cir64 *ptr, const sint dep, sint val);
-sint aver_of_cir64(struct cir64 *ptr);
+sint d0_aver_of_cir64(struct cir64 *ptr);
 struct cirword512
 {
 	word w512pool[512];

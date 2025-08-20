@@ -7,6 +7,7 @@
 
 #include "jakctrl.h"
 //
+static sint u0citax, u0normx, a0normx, u0tmp, a0tmp;
 static const word w129gsin[129] =
 {
 	0000, 2344, 2687, 3030, 3372, 3714, 4054, 4393, 4731, 5067,			  // 10
@@ -26,18 +27,123 @@ static const word w129gsin[129] =
 //
 FASTFUNC sint jakctrl_d0_gpwm(sint u0cita, sint u0norm, sint d0cent)
 {
-	sint u0citatmp;
-	sint u0normtmp;
 	if (u0cita < u0haf)
 	{
-		u0citatmp = u0cita;
-		u0normtmp = u0norm;
+		u0citax = u0cita;
+		u0normx = u0norm;
 	}
 	else
 	{
-		u0citatmp = u0cita - u0haf;
-		u0normtmp = 0 - u0norm;
+		u0citax = u0cita - u0haf;
+		u0normx = 0 - u0norm;
 	}
-	sint u0tmp = g0_mpy(a0_lookword(w129gsin, u0citatmp, 129), u0normtmp);
+	u0tmp = g0_mpy(a0_lookword(w129gsin, u0citax, 129), u0normx);
 	return u0_mpy(u0tmp, d0cent) + d0cent;
+}
+static const word w129gsin8sect[129] =
+{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 800, 1600, 2400, 3200, 4000, 4800, 5600, 6400, 7200, 8000, 8800, 9600, 10400, 11200, 12000,
+	12800, 13600, 14400, 15200, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000,
+	16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000,
+	16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000,
+	16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000, 16000,
+	16000, 16000, 16000, 16000, 16000, 16000, 15200, 14400, 13600, 12800, 12000, 11200, 10400, 9600, 8800, 8000, 7200, 6400,
+	5600, 4800, 4000, 3200, 2400, 1600, 800, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,				  //
+};
+FASTFUNC sint jakctrl_d0_gpwm8sect(sint u0cita, sint a0norm, sint d0cent)
+{
+	if (u0cita < u0haf)
+	{
+		u0citax = u0cita;
+		a0normx = a0norm;
+	}
+	else
+	{
+		u0citax = u0cita - u0haf;
+		a0normx = 0 - a0norm;
+	}
+	a0tmp = a0_lookword(w129gsin8sect, u0citax, 129);
+	a0tmp = a0tmp * a0normx >> (12 + 2);	//a0_mpy(a0tmp, a0normx);
+	a0tmp = a0tmp * d0cent >> 12;
+	return a0tmp + d0cent;
+}
+FASTFUNC sint jakctrl_d0_gpwmN12(sint g0cita, sint d0cmpr)	//XX
+{
+#define	_30deg	(g0one/12)	// 360/12=30deg
+#define _60deg	(_30deg*2)
+#define _120deg	(_30deg*4)
+#define	_180deg	(_30deg*6)
+#define	_240deg	(_30deg*8)
+	// 180DEG - 6part.
+	sint base = d0cmpr >> 2;
+	sint dt = d0cmpr - base;
+	sint phi = _180deg - g0cita;
+	if (g0cita < _60deg)
+	{
+		return d0cmpr;
+	}
+	else //
+	if (g0cita < _180deg)
+	{
+		return base + phi * dt / _120deg;
+	}
+	else //
+	if (g0cita < _240deg)
+	{
+		return -d0cmpr;
+	}
+	else ;
+	return 0 - base - phi * dt / _120deg;
+}
+FASTFUNC sint jakctrl_d0_gpwmN8(sint g0cita, sint d0cmpr)
+{
+#define _45deg	(g0one/8)
+	// 180deg-4part
+	sint base = d0cmpr >> 2;
+	sint dt = d0cmpr - base;
+	sint phi = 0;
+	sint g0tmp;
+	if (g0cita > _45deg * 7)
+	{
+		phi = g0one - g0cita;
+		return -base - phi * dt / (_180deg - _45deg);
+	}
+	else //
+	if (g0cita > _45deg * 6)
+	{
+		phi = g0one - g0cita;
+		return -base - phi * dt / (_180deg - _45deg);
+	}
+	else //
+	if (g0cita > _45deg * 5)
+	{
+		phi = g0one - g0cita;
+		return -base - phi * dt / (_180deg - _45deg);
+	}
+	else //
+	if (g0cita > _45deg * 4)
+	{
+		phi = g0one - g0cita;
+		return 0 - d0cmpr;
+	}
+	else //
+	if (g0cita > _45deg * 3)
+	{
+		phi = _180deg - g0cita;
+		return base + phi * dt / (_180deg - _45deg);
+	}
+	else //
+	if (g0cita > _45deg * 2)
+	{
+		phi = _180deg - g0cita;
+		return base + phi * dt / (_180deg - _45deg);
+	}
+	else //
+	if (g0cita > _45deg * 1)
+	{
+		phi = _180deg - g0cita;
+		return base + phi * dt / (_180deg - _45deg);
+	}
+	else ;
+	return d0cmpr;
 }

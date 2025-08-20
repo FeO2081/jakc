@@ -69,12 +69,15 @@ enum jakmode
 #define		_64k	(65536)
 //
 #define		g0one	(16384)
+#define		g0max	(g0one-1)
 #define		g0(X)	((jkreal)(X)*g0one)
 
 #define		m0one	(1024)
+#define		m0max	(m0one-1)
 #define		m0(X)	((jkreal)(X)*m0one)
 
 #define		n0one	(1024*1024*1024)
+#define		n0max	(n0one-1)
 #define		n0(X)	((jkreal)(X)*n0one)
 
 #define		u0one	(1024*1024)
